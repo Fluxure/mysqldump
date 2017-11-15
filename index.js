@@ -217,10 +217,14 @@ module.exports = function (options, done) {
 
 					var tblKey    = 'Table';
 					var createKey = 'Create Table';
+					var tblNotExists = ' IF NOT EXISTS ';
+					var viewNotExists = '';
 
 					if (data[i][0]['Create View']) {
 						tblKey    = 'View';
 						createKey = 'Create View';
+						viewNotExists = ' OR REPLACE ';
+						tblNotExists = '';
 
 						// Remove from tables array so data dump isn't done.
 						var index = results.getTables.indexOf(data[i][0][tblKey]);
@@ -229,9 +233,12 @@ module.exports = function (options, done) {
 
 					var r = data[i][0][createKey] + ";";
 
+					r = r.replace(/^CREATE ALGORITHM=.*DEFINER/, 'CREATE');
+
 					if (options.dropTable) r = r.replace(/CREATE (TABLE|VIEW) `/, 'DROP ' + tblKey + ' IF EXISTS `' + data[i][0][tblKey] + '`;\nCREATE ' + tblKey + ' `');
-					if (options.ifNotExist) r = r.replace(/CREATE (TABLE|VIEW) `/, 'CREATE ' + tblKey + ' IF NOT EXISTS `');
+					if (options.ifNotExist) r = r.replace(/CREATE (TABLE|VIEW) `/, 'CREATE ' + viewNotExists + tblKey + tblNotExists + ' `');
 					if (!options.autoIncrement) r = r.replace(/AUTO_INCREMENT=\d+ /g, '');
+
 					resp.push(r);
 				}
 				callback(err, resp);
